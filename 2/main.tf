@@ -2,21 +2,38 @@ provider "aws" {
   region = "ap-northeast-1"
 }
 
-resource "aws_instance" "example" {
-  ami                    = "ami-0febccb66c819dac9" // ubuntu-20.04
+resource "aws_launch_template" "example" {
+  image_id               = "ami-0febccb66c819dac9" // ubuntu-20.04
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.instance.id]
 
-  user_data = <<-EOF
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               echo "Hello, Terraform" > index.html
               nohup busybox httpd -f -p ${var.server_port} &
               EOF
+  )
 
-  user_data_replace_on_change = true
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
-  tags = {
-    Name = "terraform-example"
+resource "aws_autoscaling_group" "example" {
+  vpc_zone_identifier = data.aws_subnets.default.ids
+
+  min_size = 2
+  max_size = 10
+
+  launch_template {
+    id      = aws_launch_template.example.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "terraform-asg-example"
+    propagate_at_launch = true
   }
 }
 
@@ -37,7 +54,18 @@ variable "server_port" {
   default     = 8080
 }
 
-output "public_ip" {
-  value       = aws_instance.example.public_ip
-  description = "The public IP address of the web server"
+data "aws_vpc" "default" {
+  default = true
 }
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+# output "public_ip" {
+#   value       = aws_instance.example.public_ip
+#   description = "The public IP address of the web server"
+# }
