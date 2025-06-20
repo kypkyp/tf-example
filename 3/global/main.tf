@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket       = "terraform-up-and-running-state-kyp"
-    key          = "global/s3/terraform.tfstate"
+    key          = "workspace-example/terraform.tfstate"
     region       = "ap-northeast-1"
     use_lockfile = true
     encrypt      = true
@@ -15,9 +15,9 @@ provider "aws" {
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "terraform-up-and-running-state-kyp"
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 resource "aws_s3_bucket_versioning" "enabled" {
