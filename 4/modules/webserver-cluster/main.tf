@@ -1,6 +1,6 @@
 resource "aws_launch_template" "example" {
   image_id               = "ami-0febccb66c819dac9" // ubuntu-20.04
-  instance_type          = "t2.micro"
+  instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.instance.id]
 
   user_data = base64encode(templatefile("${path.module}/user-data.sh", {
@@ -17,8 +17,8 @@ resource "aws_launch_template" "example" {
 resource "aws_autoscaling_group" "example" {
   vpc_zone_identifier = data.aws_subnets.default.ids
 
-  min_size = 2
-  max_size = 10
+  min_size = var.min_size
+  max_size = var.max_size
 
   target_group_arns = [aws_lb_target_group.asg.arn]
   health_check_type = "ELB"
