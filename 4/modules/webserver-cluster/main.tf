@@ -1,3 +1,10 @@
+locals {
+  http_port    = 80
+  any_port     = 0
+  any_protocol = "-1"
+  all_ips      = ["0.0.0.0/0"]
+}
+
 resource "aws_launch_template" "example" {
   image_id               = "ami-0febccb66c819dac9" // ubuntu-20.04
   instance_type          = var.instance_type
@@ -55,7 +62,7 @@ resource "aws_lb" "example" {
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.example.arn
-  port              = 80
+  port              = local.http_port
   protocol          = "HTTP"
 
   default_action {
@@ -73,17 +80,17 @@ resource "aws_security_group" "alb" {
   name = "${var.cluster_name}-alb"
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = local.http_port
+    to_port     = local.http_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = local.all_ips
   }
 
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = local.any_port
+    cidr_blocks = local.all_ips
   }
 }
 
